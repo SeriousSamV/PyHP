@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.29)
 project(PyPHP C)
 
+set(CMAKE_C_STANDARD 23)
+
 add_compile_options(-fsanitize=address)
 add_compile_options(-fno-omit-frame-pointer)
 add_compile_options(-fsanitize-address-use-after-scope)
@@ -19,4 +21,4 @@ endif()
 include(CTest)
 enable_testing()
 
-set(CMAKE_C_STANDARD 23)
+add_executable(pyhp_demo_server src/pyhp_demo_server.c)

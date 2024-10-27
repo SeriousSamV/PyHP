@@ -8618,7 +8618,6 @@ vendor
 *.sig
 
 pkg/
-src/
 
 ### Spark template
 *#*#
