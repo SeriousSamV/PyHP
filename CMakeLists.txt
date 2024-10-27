@@ -16,3 +16,8 @@ include(CTest)
 enable_testing()
 
 add_executable(pyhp_demo_server src/pyhp_demo_server.c)
+
+add_library(tiny_http_server_lib src/tiny_http/tiny_http_server_lib.c src/tiny_http/tiny_http_server_lib.h)
+
+add_executable(assert_tiny_http_server_lib test/assert_tiny_http_server_lib.c)
+target_link_libraries(assert_tiny_http_server_lib tiny_http_server_lib)

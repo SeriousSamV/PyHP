@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#define DEBUG true;
 #define RECEIVE_BUFFER_SIZE (1024 * 4)
 #define SEND_BUFFER_SIZE (1024 * 4)
 
@@ -49,6 +50,7 @@ void handle_shutdown(const int signal_number) {
 int main(const int argc, const char *const *const argv) {
     printf("Tiny HTTP Server\n");
     signal(SIGINT, handle_shutdown);
+    signal(SIGQUIT, handle_shutdown);
     signal(SIGHUP, handle_shutdown);
     signal(SIGTERM, handle_shutdown);
 
@@ -133,8 +135,8 @@ int main(const int argc, const char *const *const argv) {
                                     "Content-Length: %ld\r\n", body_sz - 1);
         send_buffer_len += snprintf(send_buffer + send_buffer_len, sizeof(send_buffer) - send_buffer_len,
                                     "Content-Type: text/plain\r\n");
-        send_buffer_len += snprintf(send_buffer + send_buffer_len, sizeof(send_buffer) - send_buffer_len, "\r\n%s",
-                                    body);
+        send_buffer_len += snprintf(send_buffer + send_buffer_len, sizeof(send_buffer) - send_buffer_len,
+                                    "\r\n%s", body);
         printf("sending %ld bytes\n", send_buffer_len);
         size_t clean_http_res_len = 0;
         char *clean_http_resp = strip_control_chars(send_buffer, send_buffer_len, &clean_http_res_len);
