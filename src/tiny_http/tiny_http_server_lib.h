@@ -24,7 +24,7 @@ typedef struct http_request {
     http_version version;
     http_method method;
     char *url;
-    http_header *headers;
+    http_header **headers;
     size_t headers_cnt;
     uint8_t *body;
     size_t body_len;

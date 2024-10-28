@@ -67,7 +67,59 @@ http_request *parse_http_request(const uint8_t *const http_packet, const size_t 
         free(request);
         return nullptr;
     }
-    // TODO parse the rest
+
+    if (ptr >= http_packet_len || ptr + 2 >= http_packet_len) {
+        return request;
+    }
+
+    ptr += 2; // '\r\n'
+    for (size_t i = 0; ptr < http_packet_len; i++) {
+        if (ptr + 2 >= http_packet_len) {
+            break;
+        }
+        http_header *header = calloc(1, sizeof(http_header));
+        const size_t header_name_start_ptr = ptr;
+        size_t header_name_len = 0;
+        for (; ptr < http_packet_len; ptr++) {
+            if (http_packet[ptr] == ' ') {
+                header_name_len = ptr - header_name_start_ptr;
+                break;
+            }
+        }
+        if (header_name_len == 0) {
+            fprintf(stderr, "misformed header");
+            fflush(stderr);
+            free(request->url);
+            free(request);
+            free(header);
+            return nullptr;
+        }
+        header->name = strndup((char *) http_packet + ptr - header_name_len, header_name_len - 1);
+
+        for (; ptr < http_packet_len; ptr++) {
+            if (http_packet[ptr] != ' ') {
+                break;
+            }
+        }
+        const size_t header_value_start = ptr;
+        size_t header_value_len = 0;
+        for (; ptr < http_packet_len; ptr++) {
+            if (http_packet[ptr] == '\r' && http_packet[ptr + 1] == '\n') {
+                header_value_len = ptr - header_value_start;
+                break;
+            }
+        }
+        header->value = strndup((char *) http_packet + ptr - header_value_len, header_value_len);
+        if (request->headers == NULL) {
+            request->headers = calloc(1, sizeof(http_header*));
+        } else {
+            const http_header **new_headers = realloc(request->headers, sizeof(http_header*) * (i + 1));
+            request->headers = new_headers;
+        }
+        request->headers[i] = header;
+        request->headers_cnt = i + 1;
+        ptr += 2;
+    }
 
     return request;
 }
