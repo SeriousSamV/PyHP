@@ -121,5 +121,11 @@ http_request *parse_http_request(const uint8_t *const http_packet, const size_t 
         ptr += 2;
     }
 
+    ptr += 2;
+    if (ptr < http_packet_len) {
+        request->body_len = http_packet_len - ptr;
+        request->body = (uint8_t*) strndup((char *) http_packet + ptr, request->body_len);
+    }
+
     return request;
 }
