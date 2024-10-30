@@ -13,6 +13,7 @@ typedef enum http_version {
 
 typedef enum http_method {
     GET = 1,
+    POST = 2,
 } http_method;
 
 typedef struct http_header {
