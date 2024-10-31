@@ -55,7 +55,7 @@ http_request *parse_http_request(const uint8_t *const http_packet, const size_t 
     printf("request method: %d", request->method);
 #endif
 
-    for (int iter_cnt = 0; ptr < http_packet_len || iter_cnt < MAX_URL_LENGTH; ptr++, iter_cnt++) {
+    for (int iter_cnt = 0; ptr < http_packet_len && iter_cnt < MAX_URL_LENGTH; ptr++, iter_cnt++) {
         if (http_packet[ptr] == ' ') {
             request->url = strndup((char *) &http_packet[start_uri], ptr - start_uri);
             ptr++;
@@ -106,7 +106,7 @@ http_request *parse_http_request(const uint8_t *const http_packet, const size_t 
         http_header *header = calloc(1, sizeof(http_header));
         const size_t header_name_start_ptr = ptr;
         size_t header_name_len = 0;
-        for (int iter_cnt = 0; ptr < http_packet_len || iter_cnt < 8; ptr++, iter_cnt++) {
+        for (int iter_cnt = 0; ptr < http_packet_len && iter_cnt < MAX_HTTP_HEADER_NAME_LENGTH; ptr++, iter_cnt++) {
             if (http_packet[ptr] == ' ') {
                 header_name_len = ptr - header_name_start_ptr;
                 break;
@@ -129,7 +129,7 @@ http_request *parse_http_request(const uint8_t *const http_packet, const size_t 
         }
         const size_t header_value_start = ptr;
         size_t header_value_len = 0;
-        for (; ptr < http_packet_len; ptr++) {
+        for (int iter_cnt = 0; ptr < http_packet_len && iter_cnt < MAX_HTTP_HEADER_VALUE_LENGTH; ptr++, iter_cnt++) {
             if (http_packet[ptr] == '\r' && http_packet[ptr + 1] == '\n') {
                 header_value_len = ptr - header_value_start;
                 break;
