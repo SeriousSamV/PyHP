@@ -8,6 +8,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum parse_http_request_status {
+    PARSE_OK = 0,
+    E_REQ_IS_NULL = -11,
+    E_MALFORMED_HTTP_HEADER = 1,
+    E_ALLOC_MEM_FOR_HEADERS = 2,
+    E_HTTP_METHOD_NOT_SUPPORTED = 3,
+    E_MALFORMED_HTTP_REQUEST_LINE = 4,
+    E_HTTP_VERSION_NOT_SUPPORTED = 5,
+};
+
 
 /**
  * Frees the memory allocated for the given HTTP request and its components.
@@ -65,20 +75,22 @@ ssize_t get_body_size_from_header(const http_header *const *const headers, const
  * @param request the http_request object being parsed
  * @param ptr the http packet stream scan ptr
  */
-void parse_http_request_body(
-    const uint8_t * const http_packet,
+enum parse_http_request_status parse_http_request_body(
+    const uint8_t *const http_packet,
     const size_t http_packet_len,
     http_request *request,
     const size_t *ptr) {
     if (request == nullptr) {
         fprintf(stderr, "Error: null request\n");
         fflush(stderr);
-        return;
+        return E_REQ_IS_NULL;
     }
     if (*ptr < http_packet_len) {
-        const ssize_t body_len_from_header = request != nullptr && request->headers != nullptr ? get_body_size_from_header(
-            (const http_header * const * const) request->headers,
-            request->headers_cnt) : 0;
+        const ssize_t body_len_from_header = request != nullptr && request->headers != nullptr
+                                                 ? get_body_size_from_header(
+                                                     (const http_header * const * const) request->headers,
+                                                     request->headers_cnt)
+                                                 : 0;
         if (body_len_from_header >= 0) {
             request->body_len = body_len_from_header;
         } else {
@@ -86,20 +98,11 @@ void parse_http_request_body(
         }
         request->body = (uint8_t *) strndup((char *) http_packet + *ptr, request->body_len);
     }
+    return PARSE_OK;
 }
 
-enum parse_http_request_status {
-    PARSE_OK = 0,
-    E_REQ_IS_NULL = -11,
-    E_MALFORMED_HTTP_HEADER = 1,
-    E_ALLOC_MEM_FOR_HEADERS = 2,
-    E_HTTP_METHOD_NOT_SUPPORTED = 3,
-    E_MALFORMED_HTTP_REQUEST_LINE = 4,
-    E_HTTP_VERSION_NOT_SUPPORTED = 5,
-};
-
 enum parse_http_request_status parse_http_request_headers(
-    const uint8_t * const http_packet,
+    const uint8_t *const http_packet,
     const size_t http_packet_len,
     http_request *request,
     size_t *ptr) {
@@ -133,7 +136,8 @@ enum parse_http_request_status parse_http_request_headers(
         }
         const size_t header_value_start = *ptr;
         size_t header_value_len = 0;
-        for (int iter_cnt = 0; *ptr < http_packet_len && iter_cnt < MAX_HTTP_HEADER_VALUE_LENGTH; (*ptr)++, iter_cnt++) {
+        for (int iter_cnt = 0; *ptr < http_packet_len && iter_cnt < MAX_HTTP_HEADER_VALUE_LENGTH;
+             (*ptr)++, iter_cnt++) {
             if (http_packet[(*ptr)] == '\r' && http_packet[*ptr + 1] == '\n') {
                 header_value_len = *ptr - header_value_start;
                 break;
@@ -165,10 +169,11 @@ enum parse_http_request_status parse_http_request_headers(
 }
 
 enum parse_http_request_status parse_http_request_line_from_packet(
-    const uint8_t * const http_packet,
+    const uint8_t *const http_packet,
     const size_t http_packet_len,
     http_request *request,
     size_t *ptr) {
+    if (request == nullptr) return E_REQ_IS_NULL;
     size_t start_uri = 0;
     if (strncmp((char *) http_packet, "GET", 3) == 0) {
         *ptr += 4; // "GET " - 4
@@ -228,29 +233,39 @@ enum parse_http_request_status parse_http_request_line_from_packet(
 }
 
 http_request *parse_http_request(const uint8_t *const http_packet, const size_t http_packet_len) {
-    http_request *request = calloc(1, sizeof(http_request));
     if (http_packet != nullptr && http_packet_len <= 5) {
         fprintf(stderr, "cannot parse http request as it appears empty");
         fflush(stderr);
-        destroy_http_request(request);
+        return nullptr;
+    }
+    http_request *request = calloc(1, sizeof(http_request));
+    if (request == nullptr) {
+        fprintf(stderr, "cannot allocate memory for new http request");
+        fflush(stderr);
         return nullptr;
     }
     size_t ptr = 0;
+
     const enum parse_http_request_status request_line_parse_status =
-        parse_http_request_line_from_packet(http_packet, http_packet_len, request, &ptr);
+            parse_http_request_line_from_packet(http_packet, http_packet_len, request, &ptr);
     if (request_line_parse_status != PARSE_OK) {
         destroy_http_request(request);
         return nullptr;
     }
 
-    const enum parse_http_request_status parse_status =
-        parse_http_request_headers(http_packet, http_packet_len, request, &ptr);
-    if (parse_status != PARSE_OK) {
+    const enum parse_http_request_status headers_parse_status =
+            parse_http_request_headers(http_packet, http_packet_len, request, &ptr);
+    if (headers_parse_status != PARSE_OK) {
         destroy_http_request(request);
         return nullptr;
     }
 
-    parse_http_request_body(http_packet, http_packet_len, request, &ptr);
+    const enum parse_http_request_status body_parse_status =
+            parse_http_request_body(http_packet, http_packet_len, request, &ptr);
+    if (body_parse_status != PARSE_OK) {
+        destroy_http_request(request);
+        return nullptr;
+    }
 
     return request;
 }
