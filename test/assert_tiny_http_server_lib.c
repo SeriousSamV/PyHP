@@ -51,6 +51,7 @@ void test_request_post_root_curl(void) {
     assert(http_req->method == POST);
     assert(http_req->version == HTTP_1_0);
     assert(strncmp(http_req->url, "/one/two/three", 255) == 0);
+    assert(http_req->headers_cnt == 6);
     assert(strncmp(http_req->headers[0]->name, "Content-Type", 255) == 0);
     assert(strncmp(http_req->headers[0]->value, "application/json", 255) == 0);
     assert(strncmp(http_req->headers[1]->name, "User-Agent", 255) == 0);
@@ -87,6 +88,7 @@ void test_request_post_root_curl_with_wide_chars(void) {
     assert(http_req->method == POST);
     assert(http_req->version == HTTP_1_0);
     assert(strncmp(http_req->url, "/one/🐌/three", 255) == 0);
+    assert(http_req->headers_cnt == 7);
     assert(strncmp(http_req->headers[0]->name, "Content-Type", 255) == 0);
     assert(strncmp(http_req->headers[0]->value, "application/json", 255) == 0);
     assert(strncmp(http_req->headers[1]->name, "User-Agent", 255) == 0);
