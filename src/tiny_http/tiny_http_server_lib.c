@@ -38,8 +38,9 @@ void destroy_http_request(http_request *http_request) {
     if (http_request->headers != nullptr) {
         for (size_t i = 0; i < http_request->headers_cnt; i++) {
             free(http_request->headers[i]);
-            http_request->headers = nullptr;
+            http_request->headers[i] = nullptr;
         }
+        http_request->headers = nullptr;
         http_request->headers_cnt = 0;
     }
     free(http_request->url);
@@ -232,6 +233,15 @@ enum parse_http_request_status parse_http_request_line_from_packet(
     return PARSE_OK;
 }
 
+
+/**
+ * Parses an HTTP request from the given http packet in octets.
+ *
+ * @param http_packet A pointer to the HTTP packet to parse.
+ * @param http_packet_len The length of the HTTP packet.
+ *
+ * @return A pointer to the parsed HTTP request, or nullptr if parsing fails.
+ */
 http_request *parse_http_request(const uint8_t *const http_packet, const size_t http_packet_len) {
     if (http_packet != nullptr && http_packet_len <= 5) {
         fprintf(stderr, "cannot parse http request as it appears empty");

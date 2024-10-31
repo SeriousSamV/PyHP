@@ -18,7 +18,7 @@ void test_request_parse_get_root_curl(void) {
             "User-Agent: curl/8.7.1\r\n"
             "Accept: */*\r\n"
             "\r\n";
-    const http_request *http_req = parse_http_request(request, strlen((char *) request));
+    http_request *http_req = parse_http_request(request, strlen((char *) request));
     assert(http_req != nullptr);
     assert(http_req->method == GET);
     assert(http_req->version == HTTP_1_0);
@@ -32,6 +32,7 @@ void test_request_parse_get_root_curl(void) {
     assert(strncmp(http_req->headers[2]->value, "*/*", 255) == 0);
     assert(http_req->body == nullptr);
     assert(http_req->body_len == 0);
+    destroy_http_request(http_req);
 }
 
 void test_request_post_root_curl(void) {
@@ -45,7 +46,7 @@ void test_request_post_root_curl(void) {
             "Content-Length: 68\r\n"
             "\r\n"
             "{\n    \"key1\": \"value1\",\n    \"key2\": \"value2\",\n    \"key3\": \"value3\"\n}";
-    const http_request *http_req = parse_http_request(request, strlen((char *) request));
+    http_request *http_req = parse_http_request(request, strlen((char *) request));
     assert(http_req != nullptr);
     assert(http_req->method == POST);
     assert(http_req->version == HTTP_1_0);
@@ -66,6 +67,7 @@ void test_request_post_root_curl(void) {
     assert(
         strncmp((char *) http_req->body,
             "{\n    \"key1\": \"value1\",\n    \"key2\": \"value2\",\n    \"key3\": \"value3\"\n}", 68) == 0);
+    destroy_http_request(http_req);
 }
 
 int main() {

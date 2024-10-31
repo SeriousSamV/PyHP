@@ -44,6 +44,21 @@ typedef struct http_response {
     size_t body_len;
 } http_response;
 
+/**
+ * Parses an HTTP request from the given http packet in octets.
+ *
+ * @param http_packet A pointer to the HTTP packet to parse.
+ * @param http_packet_len The length of the HTTP packet.
+ *
+ * @return A pointer to the parsed HTTP request, or nullptr if parsing fails.
+ */
 http_request *parse_http_request(const uint8_t *const http_packet, const size_t http_packet_len);
+
+/**
+ * Frees the memory allocated for the given HTTP request and its components.
+ *
+ * @param http_request The pointer to the HTTP request to be destroyed.
+ */
+void destroy_http_request(http_request *http_request);
 
 #endif //TINY_HTTP_SERVER_LIB_H
