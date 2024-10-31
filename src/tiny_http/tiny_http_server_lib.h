@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define MAX_URL_LENGTH 8000
+
 typedef enum http_version {
     HTTP_1_0 = 1,
 } http_version;
