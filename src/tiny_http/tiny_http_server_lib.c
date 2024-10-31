@@ -184,6 +184,10 @@ enum parse_http_request_status parse_http_request_line_from_packet(
         *ptr += 5; // "POST" - 5
         start_uri = 5;
         request->method = POST;
+    } else if (strncmp((char *) http_packet, "HEAD", 4) == 0) {
+        *ptr += 5; // "HEAD" - 5
+        start_uri = 5;
+        request->method = HEAD;
     } else {
         fprintf(stderr, "right now, only HTTP GET and POST verbs are supported");
         fflush(stderr);

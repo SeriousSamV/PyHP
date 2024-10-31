@@ -110,10 +110,34 @@ void test_request_post_root_curl_with_wide_chars(void) {
     destroy_http_request(http_req);
 }
 
+void test_request_parse_head(void) {
+    const uint8_t request[] = "HEAD /test HTTP/1.0\r\n"
+            "Host: localhost:8085\r\n"
+            "User-Agent: custom-agent/1.0\r\n"
+            "Accept: */*\r\n"
+            "\r\n";
+    http_request *http_req = parse_http_request(request, strlen((char *) request));
+    assert(http_req != nullptr);
+    assert(http_req->method == HEAD);
+    assert(http_req->version == HTTP_1_0);
+    assert(strncmp(http_req->url, "/test", 255) == 0);
+    assert(http_req->headers_cnt == 3);
+    assert(strncmp(http_req->headers[0]->name, "Host", 255) == 0);
+    assert(strncmp(http_req->headers[0]->value, "localhost:8085", 255) == 0);
+    assert(strncmp(http_req->headers[1]->name, "User-Agent", 255) == 0);
+    assert(strncmp(http_req->headers[1]->value, "custom-agent/1.0", 255) == 0);
+    assert(strncmp(http_req->headers[2]->name, "Accept", 255) == 0);
+    assert(strncmp(http_req->headers[2]->value, "*/*", 255) == 0);
+    assert(http_req->body == nullptr);
+    assert(http_req->body_len == 0);
+    destroy_http_request(http_req);
+}
+
 int main() {
     test_request_parse_get_root_curl();
     test_request_post_root_curl();
     test_request_post_root_curl_with_wide_chars();
+    test_request_parse_head();
 
     return EXIT_SUCCESS;
 }
